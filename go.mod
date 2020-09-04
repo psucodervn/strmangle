@@ -1,5 +1,5 @@
-module github.com/volatiletech/strmangle
+module github.com/psucodervn/strmangle
 
-go 1.14
+go 1.15
 
 require github.com/volatiletech/inflect v0.0.1

@@ -376,6 +376,76 @@ func CamelCase(name string) string {
 	return buf.String()
 }
 
+// SnakeCase convert name to snake_case format
+// For example: SnakeCase("birthDate") == "birth_date"
+// Copy from: https://github.com/iancoleman/strcase/blob/5e0ad225083860c70d196c6ebbb2218518df8ccd/snake.go#L66
+func SnakeCase(name string) string {
+	ignore := uint8(0)
+	delimiter := uint8('_')
+
+	n := strings.Builder{}
+	n.Grow(len(name) + 2) // nominal 2 bytes of extra space for inserted delimiters
+	start := true
+	spaces := 0
+	for i, v := range []byte(name) {
+		if v == ' ' {
+			spaces++
+			continue
+		} else if start {
+			start = false
+			spaces = 0
+		} else {
+			for ; spaces > 0; spaces-- {
+				if ignore == ' ' {
+					n.WriteByte(' ')
+				} else {
+					n.WriteByte(delimiter)
+				}
+			}
+		}
+
+		vIsCap := v >= 'A' && v <= 'Z'
+		vIsLow := v >= 'a' && v <= 'z'
+		if vIsCap {
+			v += 'a'
+			v -= 'A'
+		}
+
+		// treat acronyms as words, eg for JSONData -> JSON is a whole word
+		if i+1 < len(name) {
+			next := name[i+1]
+			vIsNum := v >= '0' && v <= '9'
+			nextIsCap := next >= 'A' && next <= 'Z'
+			nextIsLow := next >= 'a' && next <= 'z'
+			nextIsNum := next >= '0' && next <= '9'
+			// add underscore if next letter case type is changed
+			if (vIsCap && (nextIsLow || nextIsNum)) || (vIsLow && (nextIsCap || nextIsNum)) || (vIsNum && (nextIsCap || nextIsLow)) {
+				if prevIgnore := ignore > 0 && i > 0 && name[i-1] == ignore; !prevIgnore {
+					if vIsCap && nextIsLow {
+						if prevIsCap := i > 0 && name[i-1] >= 'A' && name[i-1] <= 'Z'; prevIsCap {
+							n.WriteByte(delimiter)
+						}
+					}
+					n.WriteByte(v)
+					if vIsLow || vIsNum || nextIsNum {
+						n.WriteByte(delimiter)
+					}
+					continue
+				}
+			}
+		}
+
+		if (v == ' ' || v == '_' || v == '-') && uint8(v) != ignore {
+			// replace space/underscore/hyphen with delimiter
+			n.WriteByte(delimiter)
+		} else {
+			n.WriteByte(v)
+		}
+	}
+
+	return n.String()
+}
+
 // TitleCaseIdentifier splits on dots and then titlecases each fragment.
 // map titleCase (split c ".")
 func TitleCaseIdentifier(id string) string {
@@ -701,7 +771,7 @@ func IsEnumNormal(values []string) bool {
 	return true
 }
 
-//StripWhitespace removes all whitespace from a string
+// StripWhitespace removes all whitespace from a string
 func StripWhitespace(value string) string {
 	return rgxWhitespace.ReplaceAllString(value, "")
 }

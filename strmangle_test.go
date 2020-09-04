@@ -1,10 +1,9 @@
 package strmangle
 
 import (
+	"fmt"
 	"strings"
 	"testing"
-
-	"github.com/friendsofgo/errors"
 )
 
 func TestIdentQuote(t *testing.T) {
@@ -620,7 +619,7 @@ func TestRemoveDuplicates(t *testing.T) {
 		for i := 0; i < len(possible)-1; i++ {
 			for j := i + 1; j < len(possible); j++ {
 				if possible[i] == possible[j] {
-					return errors.Errorf("found duplicate: %s [%d] [%d]", possible[i], i, j)
+					return fmt.Errorf("found duplicate: %s [%d] [%d]", possible[i], i, j)
 				}
 			}
 		}
@@ -677,6 +676,25 @@ func TestIgnore(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Ignore(tt.args.table, tt.args.column, tt.args.ignoreList); got != tt.want {
 				t.Errorf("Ignore() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSnakeCase(t *testing.T) {
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{"userID", "user_id"},
+		{"userName", "user_name"},
+		{"APIKey", "api_key"},
+		{"AuthIdentity", "auth_identity"},
+	}
+	for _, tt := range tests {
+		t.Run("", func(t *testing.T) {
+			if got := SnakeCase(tt.in); got != tt.want {
+				t.Errorf("SnakeCase() = %v, want %v", got, tt.want)
 			}
 		})
 	}
